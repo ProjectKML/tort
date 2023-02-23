@@ -1,0 +1,49 @@
+[workspace]
+members = ["crates/*"]
+
+[workspace.package]
+authors = ["Lorenz Klaus <beastle9end@outlook.de>", "Marlon Klaus <marlon.klaus@outlook.de>"]
+edition = "2021"
+license = "Apache-2.0"
+repository = "https://github.com/ProjectKML/tort"
+rust-version = "1.67.1"
+version = "0.1.0"
+
+[workspace.dependencies]
+tort_app = { path = "crates/tort_app", version = "0.1.0" }
+tort_asset = { path = "crates/tort_asset", version = "0.1.0" }
+tort_core = { path = "crates/tort_core", version = "0.1.0" }
+tort_diagnostic = { path = "crates/tort_diagnostic", version = "0.1.0" }
+tort_ecs = { path = "crates/tort_ecs", version = "0.1.0" }
+tort_input = { path = "crates/tort_input", version = "0.1.0" }
+tort_log = { path = "crates/tort_log", version = "0.1.0" }
+tort_math = { path = "crates/tort_math", version = "0.1.0" }
+tort_reflect = { path = "crates/tort_reflect", version = "0.1.0" }
+tort_render = { path = "crates/tort_render", version = "0.1.0" }
+tort_tasks = { path = "crates/tort_tasks", version = "0.1.0" }
+tort_time = { path = "crates/tort_time", version = "0.1.0" }
+tort_utils = { path = "crates/tort_utils", version = "0.1.0" }
+tort_window = { path = "crates/tort_window", version = "0.1.0" }
+tort_winit = { path = "crates/tort_winit", version = "0.1.0" }
+
+bevy_app = { git = "https://github.com/ProjectKML/bevy" }
+bevy_asset = { git = "https://github.com/ProjectKML/bevy" }
+bevy_core = { git = "https://github.com/ProjectKML/bevy" }
+bevy_diagnostic = { git = "https://github.com/ProjectKML/bevy" }
+bevy_ecs = { git = "https://github.com/ProjectKML/bevy" }
+bevy_input = { git = "https://github.com/ProjectKML/bevy" }
+bevy_log = { git = "https://github.com/ProjectKML/bevy" }
+bevy_math = { git = "https://github.com/ProjectKML/bevy" }
+bevy_reflect = { git = "https://github.com/ProjectKML/bevy" }
+bevy_tasks = { git = "https://github.com/ProjectKML/bevy" }
+bevy_time = { git = "https://github.com/ProjectKML/bevy" }
+bevy_utils = { git = "https://github.com/ProjectKML/bevy" }
+bevy_window = { git = "https://github.com/ProjectKML/bevy" }
+bevy_winit = { git = "https://github.com/ProjectKML/bevy" }
+
+[profile.dev]
+opt-level = 1
+
+[profile.dev.package."*"]
+opt-level = 3
+

@@ -1,0 +1,17 @@
+# Cargo
+/target/
+Cargo.lock
+
+# IntelliJ IDEA
+.idea/
+*.iml
+
+# VS Code
+.vscode/
+
+# MacOS
+*.DS_Store
+
+# Binary files
+*.dll
+*.so

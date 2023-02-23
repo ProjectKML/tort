@@ -1,0 +1,18 @@
+[package]
+name = "tort_window"
+authors.workspace = true
+description = ""
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+version.workspace = true
+
+include = [
+    "../../LICENSE",
+    "**/*.rs",
+    "Cargo.toml"
+]
+
+[dependencies]
+bevy_window.workspace = true

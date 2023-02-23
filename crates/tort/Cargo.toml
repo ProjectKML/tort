@@ -1,0 +1,26 @@
+[package]
+name = "tort"
+authors.workspace = true
+description = ""
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+version.workspace = true
+
+[dependencies]
+tort_app.workspace = true
+tort_asset.workspace = true
+tort_core.workspace = true
+tort_diagnostic.workspace = true
+tort_ecs.workspace = true
+tort_input.workspace = true
+tort_log.workspace = true
+tort_math.workspace = true
+tort_reflect.workspace = true
+tort_render.workspace = true
+tort_tasks.workspace = true
+tort_time.workspace = true
+tort_utils.workspace = true
+tort_window.workspace = true
+tort_winit.workspace = true
