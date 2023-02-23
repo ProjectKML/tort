@@ -48,10 +48,11 @@ log = "0.4.17"
 raw-window-handle = "0.5.0"
 thiserror = "1.0.38"
 vk-mem-alloc = { git = "https://github.com/ProjectKML/vk-mem-alloc-rs" }
+spirv-std = { git = "https://github.com/EmbarkStudios/rust-gpu", features = ["glam"] }
+spirv-builder = { git = "https://github.com/EmbarkStudios/rust-gpu" }
 
 [profile.dev]
 opt-level = 1
 
 [profile.dev.package."*"]
 opt-level = 3
-

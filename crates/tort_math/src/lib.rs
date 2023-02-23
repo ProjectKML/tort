@@ -1,1 +1,1 @@
-pub use bevy_math::*;
+#![cfg_attr(target_arch = "spirv", no_std)]

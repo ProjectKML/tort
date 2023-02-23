@@ -1,5 +1,5 @@
 [package]
-name = "tort_math"
+name = "tort_shaders"
 authors.workspace = true
 description = ""
 edition.workspace = true
@@ -8,11 +8,9 @@ repository.workspace = true
 rust-version.workspace = true
 version.workspace = true
 
-include = [
-    "../../LICENSE",
-    "**/*.rs",
-    "Cargo.toml"
-]
+[lib]
+crate-type = ["dylib"]
 
 [dependencies]
+tort_math.workspace = true
 spirv-std.workspace = true
