@@ -26,6 +26,9 @@ tort_utils = { path = "crates/tort_utils", version = "0.1.0" }
 tort_window = { path = "crates/tort_window", version = "0.1.0" }
 tort_winit = { path = "crates/tort_winit", version = "0.1.0" }
 
+anyhow = "1.0.69"
+ash = { git = "https://github.com/ProjectKML/ash" }
+ash-window = { git = "https://github.com/ProjectKML/ash" }
 bevy_app = { git = "https://github.com/ProjectKML/bevy" }
 bevy_asset = { git = "https://github.com/ProjectKML/bevy" }
 bevy_core = { git = "https://github.com/ProjectKML/bevy" }
@@ -40,6 +43,11 @@ bevy_time = { git = "https://github.com/ProjectKML/bevy" }
 bevy_utils = { git = "https://github.com/ProjectKML/bevy" }
 bevy_window = { git = "https://github.com/ProjectKML/bevy" }
 bevy_winit = { git = "https://github.com/ProjectKML/bevy" }
+libc = "0.2.139"
+log = "0.4.17"
+raw-window-handle = "0.5.0"
+thiserror = "1.0.38"
+vk-mem-alloc = { git = "https://github.com/ProjectKML/vk-mem-alloc-rs" }
 
 [profile.dev]
 opt-level = 1
