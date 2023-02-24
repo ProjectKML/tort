@@ -16,4 +16,7 @@ include = [
 
 [dependencies]
 bevy_utils.workspace = true
+bytemuck.workspace = true
+ordered-float.workspace = true
 smallvec.workspace = true
+uuid.workspace = true
