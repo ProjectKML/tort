@@ -1,6 +1,8 @@
  <div align="center">
 
-# `🐢 tort`
+<img src="assets/branding/logo.svg" width="180" height="180" style="padding-top: 20px"/>
+
+# `tort`
 
 **Our game engine using Vulkan based on Bevy, written in Rust 🦀**
 
