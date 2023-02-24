@@ -1,0 +1,5 @@
+graphics node SwapchainPass(rtv backBuffer: SV_Target0, float4 clearColor: SV_ClearColor0);
+
+export void main([readonly(present)] texture backBuffer) {
+    SwapchainPass(backBuffer, float4(100.0 / 255.0, 149.0 / 255.0, 237.0 / 255.0, 1.0));
+}

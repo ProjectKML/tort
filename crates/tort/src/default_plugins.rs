@@ -1,3 +1,5 @@
+use tort_render::RenderPlugin;
+
 use crate::{
     app::{PluginGroup, PluginGroupBuilder},
     asset::AssetPlugin,
@@ -40,5 +42,6 @@ impl PluginGroup for DefaultPlugins {
                 ..Default::default()
             })
             .add(WinitPlugin::default())
+            .add(RenderPlugin::default())
     }
 }

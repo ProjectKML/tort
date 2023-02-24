@@ -29,6 +29,7 @@ tort_winit = { path = "crates/tort_winit", version = "0.1.0" }
 anyhow = "1.0.69"
 ash = { git = "https://github.com/ProjectKML/ash" }
 ash-window = { git = "https://github.com/ProjectKML/ash" }
+async-channel = "1.8.0"
 bevy_app = { git = "https://github.com/ProjectKML/bevy" }
 bevy_asset = { git = "https://github.com/ProjectKML/bevy" }
 bevy_core = { git = "https://github.com/ProjectKML/bevy" }
@@ -43,13 +44,21 @@ bevy_time = { git = "https://github.com/ProjectKML/bevy" }
 bevy_utils = { git = "https://github.com/ProjectKML/bevy" }
 bevy_window = { git = "https://github.com/ProjectKML/bevy" }
 bevy_winit = { git = "https://github.com/ProjectKML/bevy" }
+cc = "1.0.79"
 libc = "0.2.139"
+libmimalloc-sys = "0.1.30"
 log = "0.4.17"
+mimalloc = { version = "0.1.34", default-features = false }
+pathdiff = "0.2.1"
+printf-compat = "0.1.1"
 raw-window-handle = "0.5.0"
+rps = { package = "render-pipeline-shaders", git = "https://github.com/ProjectKML/render-pipeline-shaders-rs", features = ["vulkan"] }
+smallvec = "1.10.0"
 spirv-builder = { git = "https://github.com/EmbarkStudios/rust-gpu" }
 spirv-std = { git = "https://github.com/EmbarkStudios/rust-gpu", features = ["glam"] }
 thiserror = "1.0.38"
 vk-mem-alloc = { git = "https://github.com/ProjectKML/vk-mem-alloc-rs" }
+walkdir = "2.3.2"
 
 [profile.dev]
 opt-level = 1

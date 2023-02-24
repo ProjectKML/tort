@@ -17,14 +17,26 @@ include = [
 [dependencies]
 anyhow.workspace = true
 ash.workspace = true
+async-channel.workspace = true
 ash-window.workspace = true
+tort_app.workspace = true
+tort_asset.workspace = true
+tort_core.workspace = true
 tort_ecs.workspace = true
+tort_tasks.workspace = true
+tort_time.workspace = true
+tort_utils.workspace = true
 tort_window.workspace = true
 libc.workspace = true
 log.workspace = true
+printf-compat.workspace = true
 raw-window-handle.workspace = true
+rps.workspace = true
 thiserror.workspace = true
 vk-mem-alloc.workspace = true
 
 [build-dependencies]
+cc.workspace = true
+pathdiff.workspace = true
 spirv-builder.workspace = true
+walkdir.workspace = true

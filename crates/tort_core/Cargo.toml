@@ -16,3 +16,5 @@ include = [
 
 [dependencies]
 bevy_core.workspace = true
+libmimalloc-sys.workspace = true
+mimalloc.workspace = true
