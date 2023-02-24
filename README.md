@@ -10,7 +10,7 @@
 [license-badge]: https://img.shields.io/badge/License-Apache_2.0-blue.svg
 [license-url]: LICENSE
 
-[dependency-badge]: https://deps.rs/repo/github/projectkml/kamel/status.svg
-[dependency-url]: https://deps.rs/repo/github/projectkml/kamel
+[dependency-badge]: https://deps.rs/repo/github/projectkml/tort/status.svg
+[dependency-url]: https://deps.rs/repo/github/projectkml/tort
 
 </div>

@@ -46,10 +46,10 @@ bevy_winit = { git = "https://github.com/ProjectKML/bevy" }
 libc = "0.2.139"
 log = "0.4.17"
 raw-window-handle = "0.5.0"
+spirv-builder = { git = "https://github.com/EmbarkStudios/rust-gpu" }
+spirv-std = { git = "https://github.com/EmbarkStudios/rust-gpu", features = ["glam"] }
 thiserror = "1.0.38"
 vk-mem-alloc = { git = "https://github.com/ProjectKML/vk-mem-alloc-rs" }
-spirv-std = { git = "https://github.com/EmbarkStudios/rust-gpu", features = ["glam"] }
-spirv-builder = { git = "https://github.com/EmbarkStudios/rust-gpu" }
 
 [profile.dev]
 opt-level = 1

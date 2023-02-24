@@ -12,5 +12,5 @@ version.workspace = true
 crate-type = ["dylib"]
 
 [dependencies]
-tort_math.workspace = true
 spirv-std.workspace = true
+tort_math.workspace = true

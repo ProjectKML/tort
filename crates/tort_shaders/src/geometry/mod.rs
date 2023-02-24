@@ -1,5 +1,5 @@
-use spirv_std::{image::Image, spirv};
-use spirv_std::glam::{Vec4, vec4};
+use spirv_std::spirv;
+use tort_math::{vec4, Vec4};
 
 #[spirv(vertex)]
 pub fn main_vs(
