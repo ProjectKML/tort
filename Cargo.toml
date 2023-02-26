@@ -57,7 +57,7 @@ parking_lot = "0.12.1"
 pathdiff = "0.2.1"
 printf-compat = "0.1.1"
 raw-window-handle = "0.5.0"
-rspirv-reflect = "0.7.0"
+rspirv-reflect = { git = "https://github.com/ProjectKML/rspirv-reflect" }
 smallvec = "1.10.0"
 spirv-builder = { git = "https://github.com/beastle9end/rust-gpu", branch = "ext-mesh-shader" }
 spirv-std = { git = "https://github.com/beastle9end/rust-gpu", branch = "ext-mesh-shader", features = ["glam"] }

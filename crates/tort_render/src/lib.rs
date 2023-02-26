@@ -11,7 +11,7 @@ use std::ops::{Deref, DerefMut};
 
 pub use extract_param::*;
 use tort_app::{self as bevy_app, App, AppLabel, CoreSchedule, Plugin, SubApp};
-use tort_asset::AssetServer;
+use tort_asset::{AddAsset, AssetServer};
 use tort_ecs::{
     self as bevy_ecs,
     schedule::{
@@ -23,7 +23,8 @@ use tort_ecs::{
 };
 
 use crate::{
-    renderer::{render_system, FrameCtx},
+    backend::resource::pipeline::{PipelineCache, Shader, ShaderLoader},
+    renderer::{render_system, BuiltinPipelines, FrameCtx},
     view::WindowRenderPlugin,
 };
 
@@ -119,13 +120,21 @@ pub struct RenderApp;
 
 impl Plugin for RenderPlugin {
     fn build(&self, app: &mut App) {
+        app.add_asset::<Shader>()
+            .add_debug_asset::<Shader>()
+            .init_asset_loader::<ShaderLoader>()
+            .init_debug_asset_loader::<ShaderLoader>();
+
         let (instance, device) = renderer::init();
 
         app.insert_resource(instance.clone())
             .insert_resource(device.clone())
             .init_resource::<ScratchMainWorld>();
 
+        let mut pipeline_cache = PipelineCache::new(device.clone());
         let asset_server = app.world.resource::<AssetServer>().clone();
+
+        let builtin_pipelines = BuiltinPipelines::new(&asset_server, &mut pipeline_cache);
 
         let mut render_app = App::empty();
         render_app.add_simple_outer_schedule();
@@ -133,15 +142,22 @@ impl Plugin for RenderPlugin {
 
         // Prepare the schedule which extracts data from the main world to the render world
         render_app.edit_schedule(ExtractSchedule, |schedule| {
-            schedule.set_apply_final_buffers(false);
+            schedule
+                .set_apply_final_buffers(false)
+                .add_system(PipelineCache::extract_shaders_system);
         });
 
         // This set applies the commands from the extract stage while the render schedule
         // is running in parallel with the main app.
         render_schedule.add_system(apply_extract_commands.in_set(RenderSet::ExtractCommands));
 
-        render_schedule.add_system(render_system.in_set(RenderSet::Render));
+        render_schedule.add_system(
+            PipelineCache::process_pipelines_system
+                .before(render_system)
+                .in_set(RenderSet::Render),
+        );
 
+        render_schedule.add_system(render_system.in_set(RenderSet::Render));
         render_schedule.add_system(World::clear_entities.in_set(RenderSet::Cleanup));
 
         let frame_ctx = FrameCtx::new(device.clone(), 2);
@@ -151,6 +167,8 @@ impl Plugin for RenderPlugin {
             .insert_resource(instance)
             .insert_resource(device)
             .insert_resource(frame_ctx)
+            .insert_resource(pipeline_cache)
+            .insert_resource(builtin_pipelines)
             .insert_resource(asset_server);
 
         let (sender, receiver) = tort_time::create_time_channels();

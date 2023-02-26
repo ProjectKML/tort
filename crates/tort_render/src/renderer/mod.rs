@@ -1,15 +1,16 @@
+mod builtin_pipelines;
 mod frame_ctx;
 
 use std::{env, mem, slice};
 
 use anyhow::bail;
 use ash::vk;
+pub use builtin_pipelines::*;
 pub use frame_ctx::*;
 use tort_ecs::system::{Res, ResMut};
-use tort_utils::smallvec::{smallvec, SmallVec4, SmallVec8};
 
 use crate::{
-    backend::{Device, Instance, Swapchain},
+    backend::{resource::pipeline::PipelineCache, Device, Instance, Swapchain},
     view::{ExtractedWindows, WindowSurfaces},
 };
 
@@ -74,7 +75,7 @@ pub fn init() -> (Instance, Device) {
                 }
 
                 extensions.try_push_khr_portability_subset();
-                //extensions.push_ext_mesh_shader();
+                extensions.push_ext_mesh_shader();
                 extensions.push_khr_swapchain();
 
                 enabled_features.features = vk::PhysicalDeviceFeatures::default();
@@ -84,8 +85,8 @@ pub fn init() -> (Instance, Device) {
                 enabled_features.features_13 = vk::PhysicalDeviceVulkan13Features::default()
                     .dynamic_rendering(true)
                     .synchronization2(true);
-                /*enabled_features.mesh_shader_features =
-                vk::PhysicalDeviceMeshShaderFeaturesEXT::default().mesh_shader(true);*/
+                enabled_features.mesh_shader_features =
+                    vk::PhysicalDeviceMeshShaderFeaturesEXT::default().mesh_shader(true);
 
                 Ok(())
             },
@@ -99,9 +100,11 @@ pub fn init() -> (Instance, Device) {
 pub fn render_system(
     windows: Res<ExtractedWindows>,
     mut window_surfaces: ResMut<WindowSurfaces>,
-    mut frame_ctx: ResMut<FrameCtx>,
+    frame_ctx: ResMut<FrameCtx>,
     instance: Res<Instance>,
     device: Res<Device>,
+    pipeline_cache: Res<PipelineCache>,
+    builtin_pipelines: Res<BuiltinPipelines>,
 ) {
     let frame = frame_ctx.current();
 
@@ -181,6 +184,39 @@ pub fn render_system(
 
             device_loader.cmd_begin_rendering(command_buffer, &rendering_info);
 
+            if let Some(pipeline) =
+                pipeline_cache.get_graphics_pipeline(&builtin_pipelines.geometry_pipeline)
+            {
+                device_loader.cmd_bind_pipeline(
+                    command_buffer,
+                    vk::PipelineBindPoint::GRAPHICS,
+                    **pipeline,
+                );
+
+                device_loader.cmd_set_viewport(
+                    command_buffer,
+                    0,
+                    slice::from_ref(
+                        &vk::Viewport::default()
+                            .width(1600.0)
+                            .height(900.0)
+                            .max_depth(1.0),
+                    ),
+                );
+                device_loader.cmd_set_scissor(
+                    command_buffer,
+                    0,
+                    slice::from_ref(&vk::Rect2D::default().extent(vk::Extent2D {
+                        width: 1600,
+                        height: 900,
+                    })),
+                );
+
+                device
+                    .mesh_shader_loader()
+                    .cmd_draw_mesh_tasks(command_buffer, 1, 1, 1);
+            }
+
             device_loader.cmd_end_rendering(command_buffer);
 
             device_loader.cmd_pipeline_barrier2(
@@ -211,10 +247,10 @@ pub fn render_system(
                     direct_queue,
                     slice::from_ref(
                         &vk::SubmitInfo::default()
-                            .wait_semaphores(slice::from_ref(&image_acquired_semaphore))
+                            .wait_semaphores(slice::from_ref(image_acquired_semaphore))
                             .wait_dst_stage_mask(&[vk::PipelineStageFlags::COLOR_ATTACHMENT_OUTPUT])
                             .command_buffers(slice::from_ref(&command_buffer))
-                            .signal_semaphores(slice::from_ref(&rendering_done_semaphore)),
+                            .signal_semaphores(slice::from_ref(rendering_done_semaphore)),
                     ),
                     **fence,
                 )
@@ -223,7 +259,7 @@ pub fn render_system(
             match device.swapchain_loader().queue_present(
                 direct_queue,
                 &vk::PresentInfoKHR::default()
-                    .wait_semaphores(slice::from_ref(&rendering_done_semaphore))
+                    .wait_semaphores(slice::from_ref(rendering_done_semaphore))
                     .swapchains(slice::from_ref(swapchain))
                     .image_indices(slice::from_ref(&window.swap_chain_image_index)),
             ) {

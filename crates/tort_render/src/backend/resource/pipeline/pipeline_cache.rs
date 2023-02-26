@@ -133,9 +133,10 @@ impl Inner {
     ) -> Result<Arc<ShaderModule>, BackendError> {
         match shader.source() {
             ShaderSource::SpirV(spirv) => {
-                if let Some(shader_module) =
-                    self.spirv_modules.lock().get(&stage_desc.shader).cloned()
-                {
+                if let Some(shader_module) = {
+                    let spirv_modules = self.spirv_modules.lock();
+                    spirv_modules.get(&stage_desc.shader).cloned()
+                } {
                     Ok(shader_module)
                 } else {
                     let shader_module = Arc::new(ShaderModule::new(
