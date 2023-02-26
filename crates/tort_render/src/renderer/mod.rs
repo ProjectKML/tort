@@ -81,7 +81,9 @@ pub fn init() -> (Instance, Device) {
                 enabled_features.features_11 = vk::PhysicalDeviceVulkan11Features::default();
                 enabled_features.features_12 =
                     vk::PhysicalDeviceVulkan12Features::default().timeline_semaphore(true);
-                enabled_features.features_13 = vk::PhysicalDeviceVulkan13Features::default();
+                enabled_features.features_13 = vk::PhysicalDeviceVulkan13Features::default()
+                    .dynamic_rendering(true)
+                    .synchronization2(true);
                 /*enabled_features.mesh_shader_features =
                 vk::PhysicalDeviceMeshShaderFeaturesEXT::default().mesh_shader(true);*/
 
