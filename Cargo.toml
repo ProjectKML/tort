@@ -20,6 +20,7 @@ tort_log = { path = "crates/tort_log", version = "0.1.0" }
 tort_math = { path = "crates/tort_math", version = "0.1.0" }
 tort_reflect = { path = "crates/tort_reflect", version = "0.1.0" }
 tort_render = { path = "crates/tort_render", version = "0.1.0" }
+tort_render_types = { path = "crates/tort_render_types", version = "0.1.0" }
 tort_tasks = { path = "crates/tort_tasks", version = "0.1.0" }
 tort_time = { path = "crates/tort_time", version = "0.1.0" }
 tort_utils = { path = "crates/tort_utils", version = "0.1.0" }
@@ -58,8 +59,8 @@ printf-compat = "0.1.1"
 raw-window-handle = "0.5.0"
 rspirv-reflect = "0.7.0"
 smallvec = "1.10.0"
-spirv-builder = { git = "https://github.com/EmbarkStudios/rust-gpu" }
-spirv-std = { git = "https://github.com/EmbarkStudios/rust-gpu", features = ["glam"] }
+spirv-builder = { git = "https://github.com/beastle9end/rust-gpu", branch = "ext-mesh-shader" }
+spirv-std = { git = "https://github.com/beastle9end/rust-gpu", branch = "ext-mesh-shader", features = ["glam"] }
 thiserror = "1.0.38"
 uuid = "1.3.0"
 vk-mem-alloc = { git = "https://github.com/ProjectKML/vk-mem-alloc-rs" }

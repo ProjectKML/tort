@@ -14,3 +14,4 @@ crate-type = ["dylib"]
 [dependencies]
 spirv-std.workspace = true
 tort_math.workspace = true
+tort_render_types.workspace = true
