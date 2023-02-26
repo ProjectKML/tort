@@ -67,6 +67,7 @@ impl FrameCtx {
 pub struct QueueFrame {
     timeline_semaphore: TimelineSemaphore,
     command_pool: CommandPool,
+    command_buffer: CommandBuffer,
     device: Device,
 }
 
@@ -84,9 +85,17 @@ impl QueueFrame {
         )
         .unwrap();
 
+        let command_buffer = CommandBuffer::new(
+            device.clone(),
+            command_pool.clone(),
+            &CommandBufferDesc::default(),
+        )
+        .unwrap();
+
         Self {
             timeline_semaphore,
             command_pool,
+            command_buffer,
             device,
         }
     }
@@ -96,14 +105,14 @@ impl QueueFrame {
         &self.timeline_semaphore
     }
 
-    pub fn acquire_cmd_buffer(&self) -> CommandBuffer {
-        //TODO: reuse instead of recreate every time
-        CommandBuffer::new(
-            self.device.clone(),
-            self.command_pool.clone(),
-            &CommandBufferDesc::default(),
-        )
-        .unwrap()
+    #[inline]
+    pub fn command_pool(&self) -> &CommandPool {
+        &self.command_pool
+    }
+
+    #[inline]
+    pub fn command_buffer(&self) -> &CommandBuffer {
+        &self.command_buffer
     }
 }
 

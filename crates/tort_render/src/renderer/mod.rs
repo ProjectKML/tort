@@ -10,7 +10,6 @@ use tort_utils::smallvec::{smallvec, SmallVec4, SmallVec8};
 
 use crate::{
     backend::{Device, Instance, Swapchain},
-    render_graph::{RenderGraph, RenderGraphCtx},
     view::{ExtractedWindows, WindowSurfaces},
 };
 
@@ -75,7 +74,7 @@ pub fn init() -> (Instance, Device) {
                 }
 
                 extensions.try_push_khr_portability_subset();
-                extensions.push_ext_mesh_shader();
+                //extensions.push_ext_mesh_shader();
                 extensions.push_khr_swapchain();
 
                 enabled_features.features = vk::PhysicalDeviceFeatures::default();
@@ -83,8 +82,8 @@ pub fn init() -> (Instance, Device) {
                 enabled_features.features_12 =
                     vk::PhysicalDeviceVulkan12Features::default().timeline_semaphore(true);
                 enabled_features.features_13 = vk::PhysicalDeviceVulkan13Features::default();
-                enabled_features.mesh_shader_features =
-                    vk::PhysicalDeviceMeshShaderFeaturesEXT::default().mesh_shader(true);
+                /*enabled_features.mesh_shader_features =
+                vk::PhysicalDeviceMeshShaderFeaturesEXT::default().mesh_shader(true);*/
 
                 Ok(())
             },
@@ -95,61 +94,9 @@ pub fn init() -> (Instance, Device) {
     (instance, device)
 }
 
-unsafe fn update_render_graph(
-    swapchain: &Swapchain,
-    frame_ctx: &FrameCtx,
-    render_graph: &RenderGraph,
-) {
-    let current_extent = &swapchain
-        .surface_capabilities()
-        .surface_capabilities
-        .current_extent;
-    let mut back_buffer_resources = swapchain
-        .images()
-        .iter()
-        .map(|image| rps::vk_image_to_handle(*image))
-        .collect::<SmallVec4<_>>();
-    back_buffer_resources.rotate_right(frame_ctx.swapchain_image_shift);
-
-    let back_buffer_desc = rps::ResourceDesc {
-        type_: rps::ResourceType::IMAGE_2D,
-        temporal_layers: swapchain.images().len() as _,
-        buffer_image: rps::ResourceBufferImageDesc {
-            image: rps::ResourceImageDesc {
-                width: current_extent.width,
-                height: current_extent.height,
-                depth_or_array_layers: 1,
-                mip_levels: 1,
-                format: rps::format_from_vk(swapchain.used_surface_format().format),
-                sample_count: 1,
-            },
-        },
-        ..Default::default()
-    };
-
-    let args = [&back_buffer_desc as *const _ as *const _];
-    let arg_resources = [back_buffer_resources.as_ptr()];
-
-    let render_graph_update_info = rps::RenderGraphUpdateInfo {
-        frame_index: frame_ctx.frame_index() as _,
-        gpu_completed_frame_index: match frame_ctx.device_completed_frame_index() {
-            Some(index) => index as _,
-            None => rps::GPU_COMPLETED_FRAME_INDEX_NONE,
-        },
-        num_args: args.len() as _,
-        args: args.as_ptr(),
-        arg_resources: arg_resources.as_ptr(),
-        ..Default::default()
-    };
-
-    rps::render_graph_update(**render_graph, &render_graph_update_info).unwrap();
-}
-
 pub fn render_system(
     windows: Res<ExtractedWindows>,
     mut window_surfaces: ResMut<WindowSurfaces>,
-    _render_graph_ctx: Res<RenderGraphCtx>,
-    render_graph: Res<RenderGraph>,
     mut frame_ctx: ResMut<FrameCtx>,
     instance: Res<Instance>,
     device: Res<Device>,
@@ -157,6 +104,13 @@ pub fn render_system(
     let frame = frame_ctx.current();
 
     let device_loader = device.loader();
+
+    let queue_frame = frame.queue_frame(0);
+    let command_pool = **queue_frame.command_pool();
+    let command_buffer = **queue_frame.command_buffer();
+
+    let image_acquired_semaphore = frame.image_acquired_semaphore();
+    let rendering_done_semaphore = frame.rendering_done_semaphore();
 
     for window in windows.windows.values() {
         if window.physical_width == 0 || window.physical_height == 0 {
@@ -170,114 +124,107 @@ pub fn render_system(
             fence.wait_for(u64::MAX).unwrap();
             fence.reset().unwrap();
 
-            update_render_graph(swapchain, &frame_ctx, &render_graph);
+            device_loader
+                .reset_command_pool(command_pool, vk::CommandPoolResetFlags::empty())
+                .unwrap();
 
-            let batch_layout = rps::render_graph_get_batch_layout(**render_graph).unwrap();
-
-            for i in 0..batch_layout.num_cmd_batches {
-                let batch = &*batch_layout.cmd_batches.offset(i as _);
-
-                let queue_frame = frame.queue_frame(batch.queue_index);
-                let command_buffer = Box::leak(Box::new(queue_frame.acquire_cmd_buffer())); //TODO: leaking here is awful
-
-                device_loader
-                    .begin_command_buffer(
-                        **command_buffer,
-                        &vk::CommandBufferBeginInfo::default()
-                            .flags(vk::CommandBufferUsageFlags::ONE_TIME_SUBMIT),
-                    )
-                    .unwrap();
-
-                let render_graph_record_command_info = rps::RenderGraphRecordCommandInfo {
-                    cmd_buffer: rps::vk_command_buffer_to_handle(**command_buffer),
-                    frame_index: frame_ctx.frame_index() as _,
-                    cmd_begin_index: batch.cmd_begin,
-                    num_cmds: batch.num_cmds,
-                    flags: rps::RecordCommandFlags::ENABLE_COMMAND_DEBUG_MARKERS,
-                    ..Default::default()
-                };
-
-                rps::render_graph_record_commands(
-                    **render_graph,
-                    &render_graph_record_command_info,
+            device_loader
+                .begin_command_buffer(
+                    command_buffer,
+                    &vk::CommandBufferBeginInfo::default()
+                        .flags(vk::CommandBufferUsageFlags::ONE_TIME_SUBMIT),
                 )
                 .unwrap();
 
-                device_loader.end_command_buffer(**command_buffer).unwrap();
+            device_loader.cmd_pipeline_barrier2(
+                command_buffer,
+                &vk::DependencyInfo::default().image_memory_barriers(slice::from_ref(
+                    &vk::ImageMemoryBarrier2::default()
+                        .src_stage_mask(vk::PipelineStageFlags2::TOP_OF_PIPE)
+                        .dst_stage_mask(vk::PipelineStageFlags2::COLOR_ATTACHMENT_OUTPUT)
+                        .dst_access_mask(vk::AccessFlags2::COLOR_ATTACHMENT_WRITE)
+                        .old_layout(vk::ImageLayout::UNDEFINED)
+                        .new_layout(vk::ImageLayout::COLOR_ATTACHMENT_OPTIMAL)
+                        .image(window.swap_chain_image)
+                        .subresource_range(
+                            vk::ImageSubresourceRange::default()
+                                .aspect_mask(vk::ImageAspectFlags::COLOR)
+                                .level_count(1)
+                                .layer_count(1),
+                        ),
+                )),
+            );
 
-                let timeline_semaphore = **queue_frame.timeline_semaphore();
+            let color_attachment = vk::RenderingAttachmentInfo::default()
+                .image_view(window.swap_chain_image_view)
+                .image_layout(vk::ImageLayout::COLOR_ATTACHMENT_OPTIMAL)
+                .load_op(vk::AttachmentLoadOp::CLEAR)
+                .store_op(vk::AttachmentStoreOp::STORE)
+                .clear_value(vk::ClearValue {
+                    color: vk::ClearColorValue {
+                        float32: [100.0 / 255.0, 149.0 / 255.0, 237.0 / 255.0, 1.0],
+                    },
+                });
 
-                let (mut wait_semaphores, mut wait_semaphore_values, mut wait_dst_stage_masks) = (
-                    (0..batch.num_wait_fences)
-                        .map(|_| timeline_semaphore)
-                        .collect::<SmallVec8<_>>(),
-                    (0..batch.num_wait_fences)
-                        .map(|i| {
-                            *batch_layout
-                                .wait_fence_indices
-                                .offset((batch.wait_fences_begin + i) as _)
-                                as _
-                        })
-                        .collect::<SmallVec8<_>>(),
-                    (0..batch.num_wait_fences)
-                        .map(|_| vk::PipelineStageFlags::BOTTOM_OF_PIPE)
-                        .collect::<SmallVec8<_>>(),
-                );
+            let rendering_info = vk::RenderingInfo::default()
+                .render_area(
+                    vk::Rect2D::default().extent(
+                        vk::Extent2D::default()
+                            .width(window.physical_width)
+                            .height(window.physical_height),
+                    ),
+                )
+                .layer_count(1)
+                .color_attachments(slice::from_ref(&color_attachment));
 
-                let (mut signal_semaphores, mut signal_semaphore_values): (
-                    SmallVec4<_>,
-                    SmallVec4<_>,
-                ) = if batch.signal_fence_index == u32::MAX {
-                    (smallvec![], smallvec![])
-                } else {
-                    (
-                        smallvec![timeline_semaphore],
-                        smallvec![batch.signal_fence_index as _],
-                    )
-                };
+            device_loader.cmd_begin_rendering(command_buffer, &rendering_info);
 
-                let mut fence = vk::Fence::null();
+            device_loader.cmd_end_rendering(command_buffer);
 
-                if i == 0 {
-                    wait_semaphores.push(**frame.image_acquired_semaphore());
-                    wait_semaphore_values.push(0);
-                    wait_dst_stage_masks.push(vk::PipelineStageFlags::BOTTOM_OF_PIPE);
-                }
-                if i == batch_layout.num_cmd_batches - 1 {
-                    signal_semaphores.push(**frame.rendering_done_semaphore());
-                    signal_semaphore_values.push(0);
-                    fence = **frame.fence();
-                }
+            device_loader.cmd_pipeline_barrier2(
+                command_buffer,
+                &vk::DependencyInfo::default().image_memory_barriers(slice::from_ref(
+                    &vk::ImageMemoryBarrier2::default()
+                        .src_stage_mask(vk::PipelineStageFlags2::COLOR_ATTACHMENT_OUTPUT)
+                        .src_access_mask(vk::AccessFlags2::COLOR_ATTACHMENT_WRITE)
+                        .dst_stage_mask(vk::PipelineStageFlags2::BOTTOM_OF_PIPE)
+                        .old_layout(vk::ImageLayout::COLOR_ATTACHMENT_OPTIMAL)
+                        .new_layout(vk::ImageLayout::PRESENT_SRC_KHR)
+                        .image(window.swap_chain_image)
+                        .subresource_range(
+                            vk::ImageSubresourceRange::default()
+                                .aspect_mask(vk::ImageAspectFlags::COLOR)
+                                .level_count(1)
+                                .layer_count(1),
+                        ),
+                )),
+            );
 
-                let mut timeline_semaphore_submit_info = vk::TimelineSemaphoreSubmitInfo::default()
-                    .wait_semaphore_values(&wait_semaphore_values)
-                    .signal_semaphore_values(&signal_semaphore_values);
+            device_loader.end_command_buffer(command_buffer).unwrap();
 
-                let submit_info = vk::SubmitInfo::default()
-                    .push_next(&mut timeline_semaphore_submit_info)
-                    .wait_semaphores(&wait_semaphores)
-                    .wait_dst_stage_mask(&wait_dst_stage_masks)
-                    .command_buffers(slice::from_ref(command_buffer))
-                    .signal_semaphores(&signal_semaphores);
+            let direct_queue = **device.direct_queue();
 
-                device_loader
-                    .queue_submit(
-                        **device.queue(batch.queue_index),
-                        slice::from_ref(&submit_info),
-                        fence,
-                    )
-                    .unwrap();
-            }
+            device_loader
+                .queue_submit(
+                    direct_queue,
+                    slice::from_ref(
+                        &vk::SubmitInfo::default()
+                            .wait_semaphores(slice::from_ref(&image_acquired_semaphore))
+                            .wait_dst_stage_mask(&[vk::PipelineStageFlags::COLOR_ATTACHMENT_OUTPUT])
+                            .command_buffers(slice::from_ref(&command_buffer))
+                            .signal_semaphores(slice::from_ref(&rendering_done_semaphore)),
+                    ),
+                    **fence,
+                )
+                .unwrap();
 
-            let present_info = vk::PresentInfoKHR::default()
-                .wait_semaphores(slice::from_ref(frame.rendering_done_semaphore()))
-                .swapchains(slice::from_ref(swapchain))
-                .image_indices(slice::from_ref(&window.swap_chain_image_index));
-
-            match device
-                .swapchain_loader()
-                .queue_present(**device.direct_queue(), &present_info)
-            {
+            match device.swapchain_loader().queue_present(
+                direct_queue,
+                &vk::PresentInfoKHR::default()
+                    .wait_semaphores(slice::from_ref(&rendering_done_semaphore))
+                    .swapchains(slice::from_ref(swapchain))
+                    .image_indices(slice::from_ref(&window.swap_chain_image_index)),
+            ) {
                 Ok(is_suboptimal) => {
                     if is_suboptimal {
                         device.loader().device_wait_idle().unwrap();
@@ -303,6 +250,4 @@ pub fn render_system(
             }
         }
     }
-
-    frame_ctx.increment();
 }

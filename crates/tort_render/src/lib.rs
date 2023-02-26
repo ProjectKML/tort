@@ -4,7 +4,6 @@ pub mod backend;
 
 mod extract_param;
 pub mod pipelined_rendering;
-pub mod render_graph;
 pub mod renderer;
 pub mod view;
 
@@ -24,7 +23,6 @@ use tort_ecs::{
 };
 
 use crate::{
-    render_graph::{RenderGraph, RenderGraphCtx},
     renderer::{render_system, FrameCtx},
     view::WindowRenderPlugin,
 };
@@ -147,16 +145,12 @@ impl Plugin for RenderPlugin {
         render_schedule.add_system(World::clear_entities.in_set(RenderSet::Cleanup));
 
         let frame_ctx = FrameCtx::new(device.clone(), 2);
-        let render_graph_ctx = RenderGraphCtx::new(device.clone()).unwrap();
-        let render_graph = RenderGraph::new(&render_graph_ctx).unwrap();
 
         render_app
             .add_schedule(CoreSchedule::Main, render_schedule)
             .insert_resource(instance)
             .insert_resource(device)
             .insert_resource(frame_ctx)
-            .insert_resource(render_graph_ctx)
-            .insert_resource(render_graph)
             .insert_resource(asset_server);
 
         let (sender, receiver) = tort_time::create_time_channels();
