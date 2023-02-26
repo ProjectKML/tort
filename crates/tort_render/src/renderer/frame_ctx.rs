@@ -15,7 +15,7 @@ pub struct FrameCtx {
     frame_offset: usize,
     frame_index: usize,
     pub swapchain_image_shift: usize,
-    device: Device,
+    _device: Device,
 }
 
 impl FrameCtx {
@@ -29,7 +29,7 @@ impl FrameCtx {
             frame_offset: 0,
             frame_index: 0,
             swapchain_image_shift: 0,
-            device,
+            _device: device,
         }
     }
 
@@ -68,7 +68,7 @@ pub struct QueueFrame {
     timeline_semaphore: TimelineSemaphore,
     command_pool: CommandPool,
     command_buffer: CommandBuffer,
-    device: Device,
+    _device: Device,
 }
 
 impl QueueFrame {
@@ -96,7 +96,7 @@ impl QueueFrame {
             timeline_semaphore,
             command_pool,
             command_buffer,
-            device,
+            _device: device,
         }
     }
 

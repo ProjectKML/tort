@@ -28,7 +28,7 @@ impl PluginGroup for DefaultPlugins {
             .add(TimePlugin::default())
             .add(AssetPlugin {
                 asset_folder: "../../assets".to_owned(),
-                ..Default::default()
+                watch_for_changes: true,
             })
             .add(DiagnosticsPlugin::default())
             .add(InputPlugin::default())

@@ -12,4 +12,6 @@ pub enum BackendError {
     Vulkan(#[from] vk::Result),
     #[error("Reflection error: {0}")]
     Reflection(#[from] ReflectError),
+    #[error("Shaderc error: {0}")]
+    Shaderc(#[from] shaderc::Error)
 }

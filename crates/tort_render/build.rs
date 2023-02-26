@@ -3,7 +3,7 @@ use std::{fs, path::Path};
 use spirv_builder::{Capability, MetadataPrintout, SpirvBuilder};
 
 fn compile_shaders() {
-    fs::create_dir("../../assets/shaders").unwrap();
+    fs::create_dir_all("../../assets/shaders").unwrap();
 
     let result = SpirvBuilder::new("../tort_shaders", "spirv-unknown-spv1.4")
         .print_metadata(MetadataPrintout::DependencyOnly)
@@ -28,5 +28,5 @@ fn compile_shaders() {
 }
 
 fn main() {
-    compile_shaders();
+    //compile_shaders();
 }

@@ -1,7 +1,9 @@
-use std::sync::Arc;
+use std::{borrow::Cow, path::PathBuf, sync::Arc};
 
+use ash::vk;
 use concurrent_queue::ConcurrentQueue;
 use parking_lot::{Mutex, RwLock};
+use shaderc::{CompileOptions, Compiler, ResolvedInclude, ShaderKind, SpirvVersion};
 use tort_asset::{AssetEvent, AssetPath, Assets, Handle};
 use tort_ecs::{
     self as bevy_ecs,
@@ -29,6 +31,14 @@ use crate::{
     Extract,
 };
 
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+struct GlslStageDesc {
+    shader: Handle<Shader>,
+    stage: vk::ShaderStageFlags,
+    entry_point: Cow<'static, str>,
+    defines: Vec<(Cow<'static, str>, Option<Cow<'static, str>>)>,
+}
+
 struct Inner {
     immutable_samplers: Mutex<HashMap<SamplerDesc, Arc<Sampler>>>,
     descriptor_set_layouts: Mutex<HashMap<DescriptorSetLayoutDesc, Arc<DescriptorSetLayout>>>,
@@ -37,6 +47,7 @@ struct Inner {
     shaders: RwLock<HashMap<Handle<Shader>, Shader>>,
     shader_paths: RwLock<HashMap<AssetPath<'static>, Handle<Shader>>>,
 
+    glsl_modules: Mutex<HashMap<GlslStageDesc, Arc<ShaderModule>>>,
     spirv_modules: Mutex<HashMap<Handle<Shader>, Arc<ShaderModule>>>,
 
     ready_graphics_pipelines: ConcurrentQueue<GraphicsPipeline>,
@@ -55,6 +66,7 @@ impl Inner {
             shaders: RwLock::new(HashMap::new()),
             shader_paths: RwLock::new(HashMap::new()),
 
+            glsl_modules: Mutex::new(HashMap::new()),
             spirv_modules: Mutex::new(HashMap::new()),
 
             ready_graphics_pipelines: ConcurrentQueue::unbounded(),
@@ -127,7 +139,7 @@ impl Inner {
     }
 
     fn get_shader_module(
-        &self,
+        self: &Arc<Self>,
         stage_desc: &ShaderStageDesc,
         shader: &Shader,
     ) -> Result<Arc<ShaderModule>, BackendError> {
@@ -151,6 +163,104 @@ impl Inner {
                     self.spirv_modules
                         .lock()
                         .insert(stage_desc.shader.clone_weak(), shader_module.clone());
+                    Ok(shader_module)
+                }
+            }
+            ShaderSource::Glsl(source) => {
+                let stage_desc = GlslStageDesc {
+                    shader: stage_desc.shader.clone_weak(),
+                    stage: stage_desc.stage,
+                    entry_point: stage_desc.entry_point.clone(),
+                    defines: stage_desc.defines.clone(),
+                };
+
+                if let Some(shader_module) = {
+                    let glsl_modules = self.glsl_modules.lock();
+                    glsl_modules.get(&stage_desc).cloned()
+                } {
+                    Ok(shader_module)
+                } else {
+                    let compiler = Compiler::new().unwrap();
+
+                    let mut compile_options = CompileOptions::new().unwrap();
+                    compile_options.set_target_spirv(SpirvVersion::V1_4);
+
+                    let inner = self.clone();
+
+                    compile_options.set_include_callback(move |requested_source, _, _, _| {
+                        let path = AssetPath::from(tort_utils::normalize_path(&PathBuf::from(
+                            requested_source,
+                        )));
+
+                        let shader_paths = inner.shader_paths.read();
+                        let handle = shader_paths.get(&path).ok_or("Failed to get include".to_owned())?;
+
+                        let shaders = inner.shaders.read();
+                        let shader = shaders.get(handle).ok_or("Failed to get include".to_owned())?;
+
+                        match shader.source() {
+                            ShaderSource::Glsl(source) => {
+                                Ok(ResolvedInclude {
+                                    resolved_name: path.path().to_str().unwrap().to_owned(),
+                                    content: source.to_string(),
+                                })
+                            }
+                            _ => Err("Failed to get include".to_owned()),
+                        }
+                    });
+
+                    for (name, value) in &stage_desc.defines {
+                        compile_options.add_macro_definition(name, value.as_deref());
+                    }
+
+                    let shader_kind = match stage_desc.stage {
+                        vk::ShaderStageFlags::VERTEX => ShaderKind::Vertex,
+                        vk::ShaderStageFlags::TESSELLATION_CONTROL => ShaderKind::TessControl,
+                        vk::ShaderStageFlags::TESSELLATION_EVALUATION => ShaderKind::TessEvaluation,
+                        vk::ShaderStageFlags::GEOMETRY => ShaderKind::Geometry,
+                        vk::ShaderStageFlags::FRAGMENT => ShaderKind::Fragment,
+                        vk::ShaderStageFlags::COMPUTE => ShaderKind::Compute,
+                        vk::ShaderStageFlags::TASK_EXT => ShaderKind::Task,
+                        vk::ShaderStageFlags::MESH_EXT => ShaderKind::Mesh,
+                        vk::ShaderStageFlags::RAYGEN_KHR => ShaderKind::RayGeneration,
+                        vk::ShaderStageFlags::ANY_HIT_KHR => ShaderKind::AnyHit,
+                        vk::ShaderStageFlags::CLOSEST_HIT_KHR => ShaderKind::ClosestHit,
+                        vk::ShaderStageFlags::MISS_KHR => ShaderKind::Miss,
+                        vk::ShaderStageFlags::INTERSECTION_KHR => ShaderKind::Intersection,
+                        vk::ShaderStageFlags::CALLABLE_KHR => ShaderKind::Callable,
+                        _ => {
+                            panic!(
+                                "Invalid {}: {}",
+                                "vk::ShaderStageFlags",
+                                stage_desc.stage.as_raw()
+                            )
+                        }
+                    };
+
+                    let input_file_name = shader.path().path().to_str().unwrap();
+
+                    let artifact = compiler
+                        .compile_into_spirv(
+                            source,
+                            shader_kind,
+                            input_file_name,
+                            &stage_desc.entry_point,
+                            Some(&compile_options),
+                        )?;
+
+                    let shader_module = Arc::new(ShaderModule::new(
+                        self.device.clone(),
+                        &ShaderModuleDesc {
+                            label: Some(input_file_name),
+                            code: artifact.as_binary(),
+                            ..Default::default()
+                        },
+                    )?);
+
+                    self.glsl_modules
+                        .lock()
+                        .insert(stage_desc, shader_module.clone());
+
                     Ok(shader_module)
                 }
             }
@@ -441,6 +551,12 @@ impl PipelineCache {
 
     pub fn process_pipelines_system(mut cache: ResMut<Self>) {
         for modified_shader in &cache.modified_shaders {
+            cache
+                .inner
+                .glsl_modules
+                .lock()
+                .retain(|k, _| &k.shader != modified_shader);
+
             cache
                 .inner
                 .spirv_modules

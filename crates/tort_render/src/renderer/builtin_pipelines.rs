@@ -21,15 +21,15 @@ impl BuiltinPipelines {
         let geometry_pipeline = pipeline_cache.queue_graphics_pipeline(&GraphicsPipelineDesc {
             stages: vec![
                 ShaderStageDesc {
-                    shader: asset_server.load("shaders/geometry_pass_mesh.spv"),
+                    shader: asset_server.load("shaders/geometry_pass.mesh.glsl"),
                     stage: vk::ShaderStageFlags::MESH_EXT,
-                    entry_point: Cow::Borrowed("geometry::pass_mesh"),
+                    entry_point: Cow::Borrowed("main"),
                     ..Default::default()
                 },
                 ShaderStageDesc {
-                    shader: asset_server.load("shaders/geometry_pass_frag.spv"),
+                    shader: asset_server.load("shaders/geometry_pass.frag.glsl"),
                     stage: vk::ShaderStageFlags::FRAGMENT,
-                    entry_point: Cow::Borrowed("geometry::pass_frag"),
+                    entry_point: Cow::Borrowed("main"),
                     ..Default::default()
                 },
             ],

@@ -14,5 +14,8 @@ include = [
     "Cargo.toml"
 ]
 
+[features]
+default = ["bevy_asset/filesystem_watcher"]
+
 [dependencies]
 bevy_asset.workspace = true

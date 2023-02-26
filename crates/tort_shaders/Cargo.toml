@@ -12,6 +12,7 @@ version.workspace = true
 crate-type = ["dylib"]
 
 [dependencies]
+shaderc.workspace = true
 spirv-std.workspace = true
 tort_math.workspace = true
 tort_render_types.workspace = true
