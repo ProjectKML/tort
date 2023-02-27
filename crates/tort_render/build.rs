@@ -28,5 +28,5 @@ fn compile_shaders() {
 }
 
 fn main() {
-    //compile_shaders();
+    compile_shaders();
 }

@@ -1,18 +1,12 @@
 [package]
 name = "tort_shaders"
-authors.workspace = true
-description = ""
-edition.workspace = true
-license.workspace = true
-repository.workspace = true
-rust-version.workspace = true
-version.workspace = true
+version = "0.1.0"
+edition = "2021"
 
 [lib]
 crate-type = ["dylib"]
 
 [dependencies]
-shaderc.workspace = true
-spirv-std.workspace = true
-tort_math.workspace = true
-tort_render_types.workspace = true
+spirv-std = { git = "https://github.com/beastle9end/rust-gpu", branch = "ext-mesh-shader", features = ["glam"] }
+tort_math = { path = "../tort_math" }
+tort_render_types = { path = "../tort_render_types" }

@@ -1,5 +1,6 @@
 [workspace]
 members = ["crates/*"]
+exclude = ["crates/tort_shaders"]
 
 [workspace.package]
 authors = ["Lorenz Klaus <beastle9end@outlook.de>", "Marlon Klaus <marlon.klaus@outlook.de>"]
