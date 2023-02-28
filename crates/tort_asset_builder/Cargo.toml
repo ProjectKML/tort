@@ -1,5 +1,5 @@
 [package]
-name = "tort_math"
+name = "tort_asset_builder"
 authors.workspace = true
 description = ""
 edition.workspace = true
@@ -14,9 +14,10 @@ include = [
     "Cargo.toml"
 ]
 
-[target.'cfg(target_arch = "spirv")'.dependencies]
-spirv-std.workspace = true
-
-[target.'cfg(not(target_arch = "spirv"))'.dependencies]
-bevy_math.workspace = true
+[dependencies]
+anyhow.workspace = true
+bitstream-io.workspace = true
 bytemuck.workspace = true
+fast-obj.workspace = true
+meshopt.workspace = true
+tort_math.workspace = true
