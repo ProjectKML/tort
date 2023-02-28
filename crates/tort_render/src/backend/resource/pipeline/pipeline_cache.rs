@@ -193,10 +193,14 @@ impl Inner {
                         )));
 
                         let shader_paths = inner.shader_paths.read();
-                        let handle = shader_paths.get(&path).ok_or("Failed to get include".to_owned())?;
+                        let handle = shader_paths
+                            .get(&path)
+                            .ok_or("Failed to get include".to_owned())?;
 
                         let shaders = inner.shaders.read();
-                        let shader = shaders.get(handle).ok_or("Failed to get include".to_owned())?;
+                        let shader = shaders
+                            .get(handle)
+                            .ok_or("Failed to get include".to_owned())?;
 
                         match shader.source() {
                             ShaderSource::Glsl(source) => {
@@ -239,14 +243,13 @@ impl Inner {
 
                     let input_file_name = shader.path().path().to_str().unwrap();
 
-                    let artifact = compiler
-                        .compile_into_spirv(
-                            source,
-                            shader_kind,
-                            input_file_name,
-                            &stage_desc.entry_point,
-                            Some(&compile_options),
-                        )?;
+                    let artifact = compiler.compile_into_spirv(
+                        source,
+                        shader_kind,
+                        input_file_name,
+                        &stage_desc.entry_point,
+                        Some(&compile_options),
+                    )?;
 
                     let shader_module = Arc::new(ShaderModule::new(
                         self.device.clone(),
