@@ -9,9 +9,11 @@ pub use builtin_pipelines::*;
 pub use frame_ctx::*;
 use tort_ecs::system::{Res, ResMut};
 
+use tort_utils::slices;
+
 use crate::{
     backend::{resource::pipeline::PipelineCache, Device, Instance, Swapchain},
-    view::{ExtractedWindows, WindowSurfaces},
+    view::{ExtractedCamera, ExtractedWindows, WindowSurfaces},
 };
 
 pub fn init() -> (Instance, Device) {
@@ -105,6 +107,7 @@ pub fn render_system(
     device: Res<Device>,
     pipeline_cache: Res<PipelineCache>,
     builtin_pipelines: Res<BuiltinPipelines>,
+    camera: Res<ExtractedCamera>,
 ) {
     let frame = frame_ctx.current();
 
@@ -210,6 +213,14 @@ pub fn render_system(
                         width: 1600,
                         height: 900,
                     })),
+                );
+
+                device_loader.cmd_push_constants(
+                    command_buffer,
+                    ***pipeline.pipeline_layout(),
+                    vk::ShaderStageFlags::MESH_EXT,
+                    0,
+                    slices::bytes_of(slice::from_ref(&camera.view_projection_matrix)),
                 );
 
                 device

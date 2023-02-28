@@ -51,6 +51,7 @@ bitstream-io = "1.6.0"
 bytemuck = { version = "1.13.0", features = ["derive", "extern_crate_std"] }
 cc = "1.0.79"
 concurrent-queue = "2.1.0"
+dolly = "0.4.1"
 fast-obj = { git = "https://github.com/ProjectKML/fast-obj-rs" }
 libc = "0.2.139"
 libmimalloc-sys = "0.1.30"

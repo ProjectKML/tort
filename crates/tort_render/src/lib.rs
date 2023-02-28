@@ -21,11 +21,14 @@ use tort_ecs::{
     system::Resource,
     world::{Mut, World},
 };
+use tort_math::{Vec2, Vec3};
 
 use crate::{
     backend::resource::pipeline::{PipelineCache, Shader, ShaderLoader},
     renderer::{render_system, BuiltinPipelines, FrameCtx},
-    view::WindowRenderPlugin,
+    view::{
+        extract_camera_system, update_camera_system, Camera, WindowRenderPlugin,
+    },
 };
 
 #[derive(Default)]
@@ -129,7 +132,17 @@ impl Plugin for RenderPlugin {
 
         app.insert_resource(instance.clone())
             .insert_resource(device.clone())
-            .init_resource::<ScratchMainWorld>();
+            .init_resource::<ScratchMainWorld>()
+            .insert_resource(Camera::new(
+                Vec3::ZERO,
+                90.,
+                Vec2::new(1600., 900.),
+                0.1,
+                1000.,
+                Vec2::ONE,
+                1.,
+            ))
+            .add_system(update_camera_system);
 
         let mut pipeline_cache = PipelineCache::new(device.clone());
         let asset_server = app.world.resource::<AssetServer>().clone();
@@ -144,7 +157,8 @@ impl Plugin for RenderPlugin {
         render_app.edit_schedule(ExtractSchedule, |schedule| {
             schedule
                 .set_apply_final_buffers(false)
-                .add_system(PipelineCache::extract_shaders_system);
+                .add_system(PipelineCache::extract_shaders_system)
+                .add_system(extract_camera_system);
         });
 
         // This set applies the commands from the extract stage while the render schedule
