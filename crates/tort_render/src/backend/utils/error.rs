@@ -13,5 +13,5 @@ pub enum BackendError {
     #[error("Reflection error: {0}")]
     Reflection(#[from] ReflectError),
     #[error("Shaderc error: {0}")]
-    Shaderc(#[from] shaderc::Error)
+    Shaderc(#[from] shaderc::Error),
 }

@@ -10,3 +10,6 @@ crate-type = ["dylib"]
 spirv-std = { git = "https://github.com/beastle9end/rust-gpu", branch = "ext-mesh-shader", features = ["glam"] }
 tort_math = { path = "../tort_math" }
 tort_render_types = { path = "../tort_render_types" }
+
+[target.'cfg(not(target_arch = "spirv"))'.dependencies]
+bitstream-io = "1.6.0"

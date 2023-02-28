@@ -1,6 +1,8 @@
 use spirv_std::{arch::set_mesh_outputs_ext, spirv};
 use tort_math::{UVec3, Vec4};
 
+use crate::utils::BitReader;
+
 #[spirv(mesh_ext(
     threads(1),
     output_vertices = 3,
@@ -10,6 +12,7 @@ use tort_math::{UVec3, Vec4};
 pub fn pass_mesh(
     #[spirv(position)] positions: &mut [Vec4; 3],
     #[spirv(primitive_triangle_indices_ext)] indices: &mut [UVec3; 1],
+    #[spirv(descriptor_set = 0, binding = 0, storage_buffer)] buffer: &[u32],
 ) {
     unsafe {
         set_mesh_outputs_ext(3, 1);
@@ -19,7 +22,15 @@ pub fn pass_mesh(
     positions[1] = Vec4::new(0.5, 0.5, 0.0, 1.0);
     positions[2] = Vec4::new(0.0, -0.5, 0.0, 1.0);
 
-    indices[0] = UVec3::new(0, 1, 2);
+    let mut reader = BitReader::new(buffer, 0);
+
+    unsafe {
+        let bits = reader.read_bits_unchecked(5);
+        let bits2 = reader.read_bits_unchecked(6);
+        let bits3 = reader.read_bits_unchecked(7);
+
+        indices[0] = UVec3::new(bits, bits2, bits3);
+    }
 }
 
 #[spirv(fragment)]
