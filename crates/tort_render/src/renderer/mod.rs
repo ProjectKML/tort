@@ -8,7 +8,6 @@ use ash::vk;
 pub use builtin_pipelines::*;
 pub use frame_ctx::*;
 use tort_ecs::system::{Res, ResMut};
-
 use tort_utils::slices;
 
 use crate::{

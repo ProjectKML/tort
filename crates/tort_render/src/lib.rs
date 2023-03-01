@@ -26,9 +26,7 @@ use tort_math::{Vec2, Vec3};
 use crate::{
     backend::resource::pipeline::{PipelineCache, Shader, ShaderLoader},
     renderer::{render_system, BuiltinPipelines, FrameCtx},
-    view::{
-        extract_camera_system, update_camera_system, Camera, WindowRenderPlugin,
-    },
+    view::{extract_camera_system, update_camera_system, Camera, WindowRenderPlugin},
 };
 
 #[derive(Default)]
