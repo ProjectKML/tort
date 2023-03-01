@@ -212,5 +212,11 @@ fn build_from_mesh(mesh: &Mesh, settings: &SimpleMeshBuildSettings) -> anyhow::R
     }
 
     bit_writer.byte_align()?;
-    Ok(bit_writer.bytewriter().unwrap().writer().get_mut().clone())
+
+    let mut bytes = bit_writer.into_writer().into_inner();
+    while (bytes.len() & 3) != 0 {
+        bytes.push(0);
+    }
+
+    Ok(bytes)
 }
