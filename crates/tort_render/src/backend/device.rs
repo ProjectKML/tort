@@ -2,7 +2,10 @@ use std::{ops::Deref, os::raw::c_char, sync::Arc};
 
 use anyhow::Result;
 use ash::{
-    extensions::{ext::MeshShader, khr::Swapchain},
+    extensions::{
+        ext::MeshShader,
+        khr::{DynamicRendering, Swapchain, Synchronization2},
+    },
     prelude::VkResult,
     vk,
 };
@@ -101,8 +104,9 @@ pub struct DeviceFeatures {
     pub features: vk::PhysicalDeviceFeatures,
     pub features_11: vk::PhysicalDeviceVulkan11Features<'static>,
     pub features_12: vk::PhysicalDeviceVulkan12Features<'static>,
-    pub features_13: vk::PhysicalDeviceVulkan13Features<'static>,
+    pub dynamic_rendering_features: vk::PhysicalDeviceDynamicRenderingFeatures<'static>,
     pub mesh_shader_features: vk::PhysicalDeviceMeshShaderFeaturesEXT<'static>,
+    pub synchronization2_features: vk::PhysicalDeviceSynchronization2Features<'static>,
 }
 
 impl DeviceFeatures {
@@ -110,14 +114,17 @@ impl DeviceFeatures {
     unsafe fn new(instance: &Instance, physical_device: vk::PhysicalDevice) -> Self {
         let mut features_11 = vk::PhysicalDeviceVulkan11Features::default();
         let mut features_12 = vk::PhysicalDeviceVulkan12Features::default();
-        let mut features_13 = vk::PhysicalDeviceVulkan13Features::default();
+
+        let mut dynamic_rendering_features = vk::PhysicalDeviceDynamicRenderingFeatures::default();
         let mut mesh_shader_features = vk::PhysicalDeviceMeshShaderFeaturesEXT::default();
+        let mut synchronization2_features = vk::PhysicalDeviceSynchronization2Features::default();
 
         let mut features = vk::PhysicalDeviceFeatures2::default()
             .push_next(&mut features_11)
             .push_next(&mut features_12)
-            .push_next(&mut features_13)
-            .push_next(&mut mesh_shader_features);
+            .push_next(&mut dynamic_rendering_features)
+            .push_next(&mut mesh_shader_features)
+            .push_next(&mut synchronization2_features);
 
         instance
             .loader()
@@ -127,8 +134,9 @@ impl DeviceFeatures {
             features: features.features,
             features_11,
             features_12,
-            features_13,
+            dynamic_rendering_features,
             mesh_shader_features,
+            synchronization2_features,
         }
     }
 }
@@ -142,8 +150,10 @@ pub struct DeviceExtensions {
 
     ext_mesh_shader: bool,
 
+    khr_dynamic_rendering: bool,
     khr_portability_subset: bool,
     khr_swapchain: bool,
+    khr_synchronization2: bool,
 }
 
 impl DeviceExtensions {
@@ -158,8 +168,10 @@ impl DeviceExtensions {
 
             ext_mesh_shader: false,
 
+            khr_dynamic_rendering: false,
             khr_portability_subset: false,
             khr_swapchain: false,
+            khr_synchronization2: false,
         })
     }
 
@@ -190,6 +202,21 @@ impl DeviceExtensions {
     #[inline]
     pub fn push_ext_mesh_shader(&mut self) {
         assert!(self.try_push_ext_mesh_shader());
+    }
+
+    #[inline]
+    pub fn try_push_khr_dynamic_rendering(&mut self) -> bool {
+        if unsafe { self.try_push(DynamicRendering::name().as_ptr()) } {
+            self.khr_dynamic_rendering = true;
+            true
+        } else {
+            false
+        }
+    }
+
+    #[inline]
+    pub fn push_khr_dynamic_rendering(&mut self) {
+        assert!(self.try_push_khr_dynamic_rendering());
     }
 
     #[inline]
@@ -225,6 +252,21 @@ impl DeviceExtensions {
     #[inline]
     pub fn push_khr_swapchain(&mut self) {
         assert!(self.try_push_khr_swapchain());
+    }
+
+    #[inline]
+    pub fn try_push_khr_synchronization2(&mut self) -> bool {
+        if unsafe { self.try_push(Synchronization2::name().as_ptr()) } {
+            self.khr_synchronization2 = true;
+            true
+        } else {
+            false
+        }
+    }
+
+    #[inline]
+    pub fn push_khr_synchronization2(&mut self) {
+        assert!(self.try_push_khr_synchronization2());
     }
 }
 
@@ -273,8 +315,10 @@ struct Inner {
 
     device: vk::Device,
     loader: ash::Device,
+    dynamic_rendering_loader: DynamicRendering,
     mesh_shader_loader: MeshShader,
     swapchain_loader: Swapchain,
+    synchronization2_loader: Synchronization2,
     allocator: Allocator,
 
     extensions: DeviceExtensions,
@@ -474,15 +518,17 @@ impl Device {
 
         let mut features_11 = enabled_features.features_11;
         let mut features_12 = enabled_features.features_12;
-        let mut features_13 = enabled_features.features_13;
+        let mut dynamic_rendering_features = enabled_features.dynamic_rendering_features;
         let mut mesh_shader_features = enabled_features.mesh_shader_features;
+        let mut synchronization2_features = enabled_features.synchronization2_features;
 
         let mut features = vk::PhysicalDeviceFeatures2::default()
             .features(enabled_features.features)
             .push_next(&mut features_11)
             .push_next(&mut features_12)
-            .push_next(&mut features_13)
-            .push_next(&mut mesh_shader_features);
+            .push_next(&mut dynamic_rendering_features)
+            .push_next(&mut mesh_shader_features)
+            .push_next(&mut synchronization2_features);
 
         //Create device
         let device_create_info = vk::DeviceCreateInfo::default()
@@ -492,8 +538,10 @@ impl Device {
 
         let instance_loader = instance.loader();
         let loader = instance_loader.create_device(physical_device, &device_create_info, None)?;
+        let dynamic_rendering_loader = DynamicRendering::new(instance_loader, &loader);
         let mesh_shader_loader = MeshShader::new(instance_loader, &loader);
         let swapchain_loader = Swapchain::new(instance_loader, &loader);
+        let synchronization2_loader = Synchronization2::new(instance_loader, &loader);
 
         let allocator = vk_mem_alloc::create_allocator(
             instance_loader,
@@ -516,8 +564,10 @@ impl Device {
 
             device: loader.handle(),
             loader,
+            dynamic_rendering_loader,
             mesh_shader_loader,
             swapchain_loader,
+            synchronization2_loader,
             allocator,
 
             extensions,
@@ -546,6 +596,11 @@ impl Device {
     }
 
     #[inline]
+    pub fn dynamic_rendering_loader(&self) -> &DynamicRendering {
+        &self.0.dynamic_rendering_loader
+    }
+
+    #[inline]
     pub fn mesh_shader_loader(&self) -> &MeshShader {
         &self.0.mesh_shader_loader
     }
@@ -553,6 +608,11 @@ impl Device {
     #[inline]
     pub fn swapchain_loader(&self) -> &Swapchain {
         &self.0.swapchain_loader
+    }
+
+    #[inline]
+    pub fn synchronization2_loader(&self) -> &Synchronization2 {
+        &self.0.synchronization2_loader
     }
 
     #[inline]

@@ -1,4 +1,5 @@
 use std::{
+    env,
     ffi::CStr,
     os::raw::{c_char, c_void},
     sync::Arc,
@@ -276,7 +277,13 @@ impl Instance {
         callback: impl FnOnce(&Entry, &InstanceLayers, &mut InstanceExtensions) -> Result<u32>,
     ) -> Result<Self> {
         unsafe {
-            let entry_loader = Entry::load()?;
+            let entry_loader = {
+                if let Ok(path) = env::var("TORT_VULKAN_LIB") {
+                    Entry::load_from(path)
+                } else {
+                    Entry::load()
+                }
+            }?;
 
             //Layers
             let mut layers = InstanceLayers::new(&entry_loader)?;

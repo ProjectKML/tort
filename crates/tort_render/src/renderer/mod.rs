@@ -18,7 +18,7 @@ use crate::{
 pub fn init() -> (Instance, Device) {
     let instance = Instance::new(
         |layers| {
-            if env::var("VALIDATION_LAYERS").is_ok() {
+            if env::var("TORT_VALIDATION_LAYERS").is_ok() {
                 layers.push_khronos_validation();
             }
         },
@@ -29,9 +29,9 @@ pub fn init() -> (Instance, Device) {
             let major = vk::api_version_major(version);
             let minor = vk::api_version_minor(version);
 
-            if major < 1 || minor < 3 {
+            if major < 1 || minor < 2 {
                 bail!(
-                    "Only Vulkan {}.{}.{} is supported, but minimum supported version is 1.3",
+                    "Only Vulkan {}.{}.{} is supported, but minimum supported version is 1.2",
                     major,
                     minor,
                     vk::api_version_patch(version)
@@ -66,9 +66,9 @@ pub fn init() -> (Instance, Device) {
                 let major = vk::api_version_minor(version);
                 let minor = vk::api_version_minor(version);
 
-                if major < 1 || minor < 1 {
+                if major < 1 || minor < 2 {
                     bail!(
-                        "Only Vulkan {}.{}.{} is supported, but minimum supported version is 1.3",
+                        "Only Vulkan {}.{}.{} is supported, but minimum supported version is 1.2",
                         major,
                         minor,
                         vk::api_version_patch(version)
@@ -77,17 +77,20 @@ pub fn init() -> (Instance, Device) {
 
                 extensions.try_push_khr_portability_subset();
                 extensions.push_ext_mesh_shader();
+                extensions.push_khr_dynamic_rendering();
                 extensions.push_khr_swapchain();
+                extensions.push_khr_synchronization2();
 
                 enabled_features.features = vk::PhysicalDeviceFeatures::default();
                 enabled_features.features_11 = vk::PhysicalDeviceVulkan11Features::default();
                 enabled_features.features_12 =
                     vk::PhysicalDeviceVulkan12Features::default().timeline_semaphore(true);
-                enabled_features.features_13 = vk::PhysicalDeviceVulkan13Features::default()
-                    .dynamic_rendering(true)
-                    .synchronization2(true);
+                enabled_features.dynamic_rendering_features =
+                    vk::PhysicalDeviceDynamicRenderingFeatures::default().dynamic_rendering(true);
                 enabled_features.mesh_shader_features =
                     vk::PhysicalDeviceMeshShaderFeaturesEXT::default().mesh_shader(true);
+                enabled_features.synchronization2_features =
+                    vk::PhysicalDeviceSynchronization2FeaturesKHR::default().synchronization2(true);
 
                 Ok(())
             },
@@ -111,6 +114,8 @@ pub fn render_system(
     let frame = frame_ctx.current();
 
     let device_loader = device.loader();
+    let dynamic_rendering_loader = device.dynamic_rendering_loader();
+    let synchronization2_loader = device.synchronization2_loader();
 
     let queue_frame = frame.queue_frame(0);
     let command_pool = **queue_frame.command_pool();
@@ -143,7 +148,7 @@ pub fn render_system(
                 )
                 .unwrap();
 
-            device_loader.cmd_pipeline_barrier2(
+            synchronization2_loader.cmd_pipeline_barrier2(
                 command_buffer,
                 &vk::DependencyInfo::default().image_memory_barriers(slice::from_ref(
                     &vk::ImageMemoryBarrier2::default()
@@ -184,7 +189,7 @@ pub fn render_system(
                 .layer_count(1)
                 .color_attachments(slice::from_ref(&color_attachment));
 
-            device_loader.cmd_begin_rendering(command_buffer, &rendering_info);
+            dynamic_rendering_loader.cmd_begin_rendering(command_buffer, &rendering_info);
 
             if let Some(pipeline) =
                 pipeline_cache.get_graphics_pipeline(&builtin_pipelines.geometry_pipeline)
@@ -227,9 +232,9 @@ pub fn render_system(
                     .cmd_draw_mesh_tasks(command_buffer, 1, 1, 1);
             }
 
-            device_loader.cmd_end_rendering(command_buffer);
+            dynamic_rendering_loader.cmd_end_rendering(command_buffer);
 
-            device_loader.cmd_pipeline_barrier2(
+            synchronization2_loader.cmd_pipeline_barrier2(
                 command_buffer,
                 &vk::DependencyInfo::default().image_memory_barriers(slice::from_ref(
                     &vk::ImageMemoryBarrier2::default()
