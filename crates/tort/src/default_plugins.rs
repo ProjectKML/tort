@@ -1,6 +1,7 @@
 use tort_render::RenderPlugin;
 
 use crate::{
+    a11y::AccessibilityPlugin,
     app::{PluginGroup, PluginGroupBuilder},
     asset::AssetPlugin,
     core::{FrameCountPlugin, TaskPoolPlugin, TypeRegistrationPlugin},
@@ -22,6 +23,7 @@ impl PluginGroup for DefaultPlugins {
                 level: Level::DEBUG,
                 ..Default::default()
             })
+            .add(AccessibilityPlugin)
             .add(TaskPoolPlugin::default())
             .add(TypeRegistrationPlugin::default())
             .add(FrameCountPlugin::default())

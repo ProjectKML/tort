@@ -9,6 +9,7 @@ rust-version.workspace = true
 version.workspace = true
 
 [dependencies]
+tort_a11y.workspace = true
 tort_app.workspace = true
 tort_asset.workspace = true
 tort_core.workspace = true

@@ -1,6 +1,10 @@
 mod default_plugins;
 pub use default_plugins::*;
 
+pub mod a11y {
+    pub use tort_a11y::*;
+}
+
 pub mod app {
     pub use tort_app::*;
 }

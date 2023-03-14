@@ -1,6 +1,7 @@
 use std::ops::{Deref, DerefMut};
 
 use tort_ecs::{
+    component::Tick,
     system::{ReadOnlySystemParam, Res, SystemMeta, SystemParam, SystemParamItem, SystemState},
     world::World,
 };
@@ -78,7 +79,7 @@ where
         state: &'s mut Self::State,
         system_meta: &SystemMeta,
         world: &'w World,
-        change_tick: u32,
+        change_tick: Tick,
     ) -> Self::Item<'w, 's> {
         // SAFETY:
         // - The caller ensures that `world` is the same one that `init_state` was called with.

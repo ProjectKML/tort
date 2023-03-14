@@ -6,7 +6,7 @@ use std::{
 
 use ash::vk;
 use raw_window_handle::{HasRawDisplayHandle, HasRawWindowHandle};
-use tort_app::{App, Plugin};
+use tort_app::{App, IntoSystemAppConfig, Plugin};
 use tort_ecs::{
     entity::Entity,
     event::EventReader,
@@ -44,7 +44,7 @@ impl Plugin for WindowRenderPlugin {
                 .init_resource::<ExtractedWindows>()
                 .init_resource::<WindowSurfaces>()
                 .init_non_send_resource::<NonSendMarker>()
-                .add_system_to_schedule(ExtractSchedule, extract_windows)
+                .add_system(extract_windows.in_schedule(ExtractSchedule))
                 .configure_set(WindowSystem::Prepare.in_set(RenderSet::Prepare))
                 .add_system(prepare_windows.in_set(WindowSystem::Prepare));
         }
