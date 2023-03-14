@@ -1,10 +1,8 @@
-#[cfg(not(target_arch = "spirv"))]
 use bytemuck::{Pod, Zeroable};
 
 use crate::Vec3;
 
-#[derive(Copy, Clone, Default)]
-#[cfg_attr(not(target_arch = "spirv"), derive(Debug, Pod, Zeroable))]
+#[derive(Copy, Clone, Debug, Default, Pod, Zeroable)]
 #[repr(C)]
 pub struct AABB {
     pub min: Vec3,
@@ -25,7 +23,6 @@ impl AABB {
     }
 }
 
-#[cfg(not(target_arch = "spirv"))]
 impl<'a, I: Iterator<Item = &'a Vec3>> From<I> for AABB {
     fn from(vertices: I) -> Self {
         let mut min = Vec3::splat(f32::MAX);

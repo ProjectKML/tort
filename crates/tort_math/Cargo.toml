@@ -14,9 +14,6 @@ include = [
     "Cargo.toml"
 ]
 
-[target.'cfg(target_arch = "spirv")'.dependencies]
-spirv-std.workspace = true
-
-[target.'cfg(not(target_arch = "spirv"))'.dependencies]
+[dependencies]
 bevy_math.workspace = true
 bytemuck.workspace = true

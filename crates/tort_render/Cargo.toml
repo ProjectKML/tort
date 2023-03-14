@@ -36,16 +36,9 @@ libc.workspace = true
 log.workspace = true
 once_cell.workspace = true
 parking_lot.workspace = true
-printf-compat.workspace = true
 raw-window-handle.workspace = true
 regex.workspace = true
 rspirv-reflect.workspace = true
 shaderc.workspace = true
 thiserror.workspace = true
 vk-mem-alloc.workspace = true
-
-[build-dependencies]
-cc.workspace = true
-pathdiff.workspace = true
-spirv-builder.workspace = true
-walkdir.workspace = true

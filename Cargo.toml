@@ -1,9 +1,8 @@
 [workspace]
 members = ["crates/*"]
-exclude = ["crates/tort_shaders"]
 
 [workspace.package]
-authors = ["Lorenz Klaus <beastle9end@outlook.de>", "Marlon Klaus <marlon.klaus@outlook.de>"]
+authors = ["Lorenz Klaus <beastle9end@outlook.de>", "Marlon Klaus <marlon.klaus@icloud.com>"]
 edition = "2021"
 license = "Apache-2.0"
 repository = "https://github.com/ProjectKML/tort"
@@ -23,7 +22,6 @@ tort_log = { path = "crates/tort_log", version = "0.1.0" }
 tort_math = { path = "crates/tort_math", version = "0.1.0" }
 tort_reflect = { path = "crates/tort_reflect", version = "0.1.0" }
 tort_render = { path = "crates/tort_render", version = "0.1.0" }
-tort_render_types = { path = "crates/tort_render_types", version = "0.1.0" }
 tort_tasks = { path = "crates/tort_tasks", version = "0.1.0" }
 tort_time = { path = "crates/tort_time", version = "0.1.0" }
 tort_utils = { path = "crates/tort_utils", version = "0.1.0" }
@@ -51,7 +49,6 @@ bevy_window = { git = "https://github.com/ProjectKML/bevy" }
 bevy_winit = { git = "https://github.com/ProjectKML/bevy" }
 bitstream-io = "1.6.0"
 bytemuck = { version = "1.13.0", features = ["derive", "extern_crate_std"] }
-cc = "1.0.79"
 concurrent-queue = "2.1.0"
 dolly = "0.4.1"
 fast-obj = { git = "https://github.com/ProjectKML/fast-obj-rs" }
@@ -63,19 +60,15 @@ mimalloc = { version = "0.1.34", default-features = false }
 once_cell = "1.17.1"
 ordered-float = "3.4.0"
 parking_lot = "0.12.1"
-pathdiff = "0.2.1"
 printf-compat = "0.1.1"
 raw-window-handle = "0.5.0"
 regex = "1.7.1"
 rspirv-reflect = { git = "https://github.com/ProjectKML/rspirv-reflect" }
 shaderc = "0.8.2"
 smallvec = "1.10.0"
-spirv-builder = { git = "https://github.com/beastle9end/rust-gpu", branch = "ext-mesh-shader" }
-spirv-std = { git = "https://github.com/beastle9end/rust-gpu", branch = "ext-mesh-shader", features = ["glam"] }
 thiserror = "1.0.38"
 uuid = "1.3.0"
 vk-mem-alloc = { git = "https://github.com/ProjectKML/vk-mem-alloc-rs" }
-walkdir = "2.3.2"
 
 [profile.dev]
 opt-level = 1
