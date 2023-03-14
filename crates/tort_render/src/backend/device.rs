@@ -220,6 +220,11 @@ impl DeviceExtensions {
     }
 
     #[inline]
+    pub fn khr_dynamic_rendering(&self) -> bool {
+        self.khr_dynamic_rendering
+    }
+
+    #[inline]
     pub fn try_push_khr_portability_subset(&mut self) -> bool {
         if unsafe { self.try_push(b"VK_KHR_portability_subset\0".as_ptr().cast()) } {
             self.khr_portability_subset = true;
@@ -267,6 +272,11 @@ impl DeviceExtensions {
     #[inline]
     pub fn push_khr_synchronization2(&mut self) {
         assert!(self.try_push_khr_synchronization2());
+    }
+
+    #[inline]
+    pub fn khr_synchronization2(&self) -> bool {
+        self.khr_synchronization2
     }
 }
 

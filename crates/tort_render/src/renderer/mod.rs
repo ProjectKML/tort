@@ -43,6 +43,8 @@ pub fn init() -> (Instance, Device) {
                 extensions.push_ext_validation_features();
             }
 
+            extensions.try_push_khr_portability_enumeration();
+
             extensions.push_khr_get_surface_capabilities2();
 
             Ok(version)

@@ -109,6 +109,7 @@ pub struct InstanceExtensions {
     ext_debug_utils: bool,
     ext_validation_features: bool,
     khr_get_surface_capabilities2: bool,
+    khr_portability_enumeration: bool,
     khr_surface: bool,
 }
 
@@ -132,6 +133,7 @@ impl InstanceExtensions {
             ext_debug_utils: false,
             ext_validation_features: false,
             khr_get_surface_capabilities2: false,
+            khr_portability_enumeration: false,
             khr_surface: false,
         })
     }
@@ -212,6 +214,26 @@ impl InstanceExtensions {
     #[inline]
     pub fn khr_get_surface_capabilities2(&self) -> bool {
         self.khr_get_surface_capabilities2
+    }
+
+    #[inline]
+    pub fn try_push_khr_portability_enumeration(&mut self) -> bool {
+        if unsafe { self.try_push(b"VK_KHR_portability_enumeration\0".as_ptr().cast()) } {
+            self.khr_portability_enumeration = true;
+            true
+        } else {
+            false
+        }
+    }
+
+    #[inline]
+    pub fn push_khr_portability_enumeration(&mut self) {
+        assert!(self.try_push_khr_portability_enumeration());
+    }
+
+    #[inline]
+    pub fn khr_portability_enumeration(&self) -> bool {
+        self.khr_portability_enumeration
     }
 
     #[inline]
@@ -332,6 +354,10 @@ impl Instance {
                 .application_info(&application_info)
                 .enabled_extension_names(&extensions.enabled)
                 .enabled_layer_names(&layers.enabled);
+
+            if extensions.khr_portability_enumeration() {
+                instance_create_info.flags |= vk::InstanceCreateFlags::ENUMERATE_PORTABILITY_KHR;
+            }
 
             if extensions.ext_validation_features() {
                 instance_create_info = instance_create_info.push_next(&mut validation_features);
